@@ -1,0 +1,38 @@
+SELECT DISTINCT ?C (GROUP_CONCAT(DISTINCT ?L;separator="|") AS ?F) ?P WHERE {
+    ?C rdf:type ontolex:LexicalConcept ;
+        sct:definition ?G ;
+        sct:writtenForm ?L ;
+        gwn:partOfSpeech ?P .
+    
+    ?C sct:directReferences ?Ee.
+
+    {
+        SELECT ?Ee WHERE {
+            ?Ee rdf:type ontolex:LexicalConcept .
+            ?Ee sct:definition ?Gee .
+            ?Ee sct:writtenForm ?Lee.
+            FILTER(LANGMATCHES (LANG(?Gee), "fr") && LANGMATCHES (LANG(?Lee), "fr"))
+        }
+    }
+    
+    FILTER NOT EXISTS {
+            # There exists no E such that E was not previously processed, and fulfills the conditions.
+            ?C sct:directReferences ?E .
+            ?E sct:definition ?Ge .
+            ?E sct:writtenForm ?Le.
+            FILTER(
+                LANGMATCHES (LANG(?Ge), "fr") && LANGMATCHES (LANG(?Le), "fr") && (?E NOT IN (?Ee))
+            )
+    }
+    FILTER NOT EXISTS {
+        # C does not already have both a gibberish definition and writtenForm.
+        ?C sct:definition ?Gg ;
+            sct:writtenForm ?Ll ;
+        FILTER(
+            LANGMATCHES (LANG(?Gg), "fr") && LANGMATCHES (LANG(?Ll), "fr")
+        )
+    }
+    FILTER(
+        LANGMATCHES(LANG(?G), "en")
+    )
+} GROUP BY ?C ?G ?P
